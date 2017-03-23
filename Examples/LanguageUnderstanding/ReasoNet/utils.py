@@ -2,6 +2,7 @@ import os
 import numpy as np
 from datetime import datetime
 import math
+from .wordvocab import *
 
 class logger:
   __name=''
@@ -50,3 +51,24 @@ def create_random_matrix(rows, columns):
     embedding[i] = np.array(rand.next(columns), dtype=np.float32)
   return np.ndarray((rows, columns), dtype=np.float32, buffer=np.array(embedding))
 
+def load_embedding(embedding_path, vocab_path, dim, init=None):
+  entity_vocab, word_vocab = Vocabulary.load_vocab(vocab_path)
+  vocab_dim = len(entity_vocab) + len(word_vocab) + 1
+  entity_size = len(entity_vocab)
+  item_embedding = [None]*vocab_dim
+  with open(embedding_path, 'r') as embedding:
+    for line in embedding.readlines():
+      line = line.strip('\n')
+      item = line.split(' ')
+      if item[0] in word_vocab:
+        item_embedding[word_vocab[item[0]].id + entity_size + 1] = np.array(item[1:], dtype="|S").astype(np.float32)
+  if init != None:
+    init.reset()
+
+  for i in range(vocab_dim):
+    if item_embedding[i] is None:
+      if init:
+        item_embedding[i] = np.array(init.next(dim), dtype=np.float32)
+      else:
+        item_embedding[i] = np.array([0]*dim, dtype=np.float32)
+  return np.ndarray((vocab_dim, dim), dtype=np.float32, buffer=np.array(item_embedding))

@@ -49,7 +49,7 @@ def delay(x, initial_state=None, time_step=1, name=''):
         time_step (int): the number of time steps to look into the past, where negative values mean to look into the future, and 0 means a no-op (default 1).
         name (str, optional): the name of the Function instance in the network
     '''
-    from ...ops import alias, past_value, future_value
+    from ...ops import alias, past_value, future_value, element_select, element_divide, placeholder, exp 
     if time_step > 0:
         return past_value  (x, time_step= time_step, initial_state=initial_state, name=name)
     elif time_step < 0:
@@ -411,3 +411,36 @@ def reduce_sum(seq, name=''):
     from cntk.cntk_py import sequence_reduce_sum
     seq = sanitize_input(seq, get_data_type(seq))
     return sequence_reduce_sum(seq, name)
+
+@typemap
+def reduce_max(x, broadcast=False, name=''):
+  """
+  Get the max value in the sequence values
+
+  Args:
+    x: input sequence
+    broadcast: if broadcast is True, the max value will be broadcast along with the input sequence,
+    else only a single value will be returned
+    name: the name of the operator
+  """
+  from ...ops import past_value, future_value, element_select, placeholder, greater 
+  m = placeholder(shape=(1,), dynamic_axes = x.dynamic_axes, name='max')
+  o = element_select(greater(x, future_value(m)), x, future_value(m))
+  rlt = o.replace_placeholders({m:sanitize_input(o)})
+  if broadcast:
+    pv = placeholder(shape=(1,), dynamic_axes = x.dynamic_axes, name='max_seq')
+    max_seq = element_select(is_first(x), sanitize_input(rlt), past_value(pv))
+    max_out = max_seq.replace_placeholders({pv:sanitize_input(max_seq)})
+  else:
+    max_out = first(rlt) 
+  return sanitize_input(max_out)
+
+@typemap
+def softmax(x, name = ''):
+  """
+  Compute softmax along with a squence values
+  """
+  from ...ops import element_divide, exp 
+  x_exp = exp((x-reduce_max(x, True))*10)
+  x_softmax = element_divide(x_exp, broadcast_as(reduce_sum(x_exp), x), name = name)
+  return x_softmax
