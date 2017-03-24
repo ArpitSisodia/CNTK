@@ -12,9 +12,7 @@
 ## Running the example
 
 ### Getting the data
-We use the ILSVRC2012 datasets to demonstrate how to train the AlexNet which won the [ILSVRC](http://www.image-net.org/challenges/LSVRC/) 2012 challenge. AlexNet is an important milestone, as for the first time it was shown that deep convolutional neural networks can outperform traditional manual feature design for vision tasks by a significant margin.
-
-ILSVRC2012 datasets are not included in the CNTK distribution. You may obtain it through http://image-net.org.
+We use the ILSVRC2012 datasets to demonstrate how to train the NIN. ILSVRC2012 datasets are not included in the CNTK distribution. You may obtain it through http://image-net.org.
 
 ## Details
 
